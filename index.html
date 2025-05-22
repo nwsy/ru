@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Celestial Cake Beneath the Sea</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      background-color: #000;
+      cursor: pointer;
+    }
+
+    canvas {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+
+<canvas id="scene"></canvas>
+<audio id="background-music" src="music.mp3" loop></audio>
+
+<!-- زر مخفي تحت الكعكة -->
+<button id="hidden-button" style="position: absolute; top: 70%; left: 50%; transform: translate(-50%, -50%); opacity: 0; width: 100px; height: 50px; cursor: pointer;"></button>
+
+<script>
+const canvas = document.getElementById("scene");
+const ctx = canvas.getContext("2d");
+const music = document.getElementById("background-music");
+const hiddenButton = document.getElementById("hidden-button");
+
+// تشغيل الموسيقى عند الضغط على أي مكان في الموقع
+document.body.addEventListener("click", () => {
+  music.play().catch((error) => {
+    console.log("Error playing music:", error);
+  });
+});
+
+// عند الضغط على الزر المخفي
+hiddenButton.addEventListener("click", () => {
+  const userInput = prompt("أدخل الرقم السري:");
+  const correctNumber = "123456";
+
+  if (userInput === correctNumber) {
+    alert("شطوره يا حلوه");
+
+    // إيقاف الرسوم المتحركة
+    cancelAnimationFrame(animationId);
+
+    // استبدال الكعكة بالقلب
+    setTimeout(() => {
+      console.log("Replacing cake with heart...");
+      replaceCakeWithHeart();
+    }, 100);
+  } else {
+    alert("Eror !");
+  }
+});
+
+// وظيفة لاستبدال الكعكة برسم قلب مع نجوم متحركة
+function replaceCakeWithHeart() {
+  console.log("Resizing canvas...");
+  resizeCanvas();
+
+  console.log("Clearing canvas...");
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  console.log("Drawing stars...");
+  // رسم النجوم في الخلفية
+  drawStars(0);
+
+  console.log("Drawing heart gradually...");
+  drawHeartGradually();
+}
+
+// رسم القلب تدريجيًا
+function drawHeartGradually() {
+  const heartX = canvas.width / 2;
+  const heartY = canvas.height / 2;
+  let progress = 0; // تقدم الرسم
+  let textProgress = 0; // تقدم كتابة النص
+
+  function drawStep() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // رسم النجوم في الخلفية
+    drawStars(0);
+
+    // رسم القلب تدريجيًا
+    ctx.save();
+    ctx.fillStyle = "red";
+    ctx.beginPath();
+    ctx.moveTo(heartX, heartY);
+    ctx.bezierCurveTo(
+      heartX - 200 * progress, heartY - 200 * progress,
+      heartX - 400 * progress, heartY + 200 * progress,
+      heartX, heartY + 400 * progress
+    );
+    ctx.bezierCurveTo(
+      heartX + 400 * progress, heartY + 200 * progress,
+      heartX + 200 * progress, heartY - 200 * progress,
+      heartX, heartY
+    );
+    ctx.fill();
+    ctx.restore();
+
+    // كتابة النص "HI" تدريجيًا فوق القلب
+    if (progress >= 1) {
+      const text = "Thx i love youu";
+      const displayedText = text.slice(0, Math.floor(textProgress * text.length));
+      ctx.font = "60px Arial"; // تكبير النص
+      ctx.fillStyle = "white";
+      ctx.textAlign = "center";
+      ctx.fillText(displayedText, heartX, heartY - 250); // رفع النص فوق القلب
+
+      if (textProgress < 1) {
+        textProgress += 0.02; // التحكم بسرعة كتابة النص
+      }
+    }
+
+    // زيادة التقدم تدريجيًا
+    if (progress < 1) {
+      progress += 0.02; // التحكم بسرعة رسم القلب
+      requestAnimationFrame(drawStep);
+    } else if (textProgress < 1) {
+      requestAnimationFrame(drawStep);
+    }
+  }
+
+  drawStep();
+}
+
+// Resize Canvas
+function resizeCanvas() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+window.addEventListener("resize", resizeCanvas);
+resizeCanvas();
+
+// === Stars ===
+let stars = [];
+for (let i = 0; i < 150; i++) {
+  stars.push({
+    x: Math.random() * canvas.width,
+    y: Math.random() * canvas.height * 0.4,
+    speedX: (Math.random() - 0.5) * 0.1,
+    speedY: (Math.random() - 0.5) * 0.1,
+    size: Math.random() * 2 + 1,
+  });
+}
+
+// تعديل دالة النجوم لتغطي كامل الصفحة
+function drawStars(time) {
+  ctx.fillStyle = '#FFF';
+  stars.forEach(star => {
+    const twinkle = Math.sin(time / 1000 + star.x) * 0.5 + 0.5;
+    ctx.beginPath();
+    ctx.arc(star.x, star.y, star.size * twinkle, 0, Math.PI * 2);
+    ctx.fill();
+
+    // تحريك النجوم ببطء
+    star.x -= star.speedX;
+    star.y -= star.speedY;
+    if (star.x < 0 || star.x > canvas.width) star.x = Math.random() * canvas.width;
+    if (star.y < 0 || star.y > canvas.height) star.y = Math.random() * canvas.height; // تغطية كامل الصفحة
+  });
+
+  // استدعاء الرسوم المتحركة للنجوم
+  requestAnimationFrame(drawStars);
+}
+
+// === Sea Bubbles ===
+let bubbles = [];
+for (let i = 0; i < 40; i++) {
+  bubbles.push({
+    x: Math.random() * canvas.width,
+    y: canvas.height - Math.random() * 300,
+    radius: Math.random() * 2 + 1,
+    speed: Math.random() * 0.6 + 0.3,
+    alpha: Math.random(),
+  });
+}
+
+// Center coordinates for cake
+let centerX = canvas.width / 2;
+let centerY;
+
+// Stars Animation
+function drawStars(time) {
+  ctx.fillStyle = '#FFF';
+  stars.forEach(star => {
+    const twinkle = Math.sin(time / 1000 + star.x) * 0.5 + 0.5;
+    ctx.beginPath();
+    ctx.arc(star.x, star.y, star.size * twinkle, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Move stars slowly
+    star.x -= star.speedX;
+    star.y -= star.speedY;
+    if (star.x < 0 || star.x > canvas.width) star.x = Math.random() * canvas.width;
+    if (star.y < 0 || star.y > canvas.height * 0.4) star.y = Math.random() * canvas.height * 0.4;
+  });
+}
+
+// Draw sea bubbles
+function drawBubbles() {
+  for (let b of bubbles) {
+    b.y -= b.speed;
+    if (b.y < canvas.height * 0.6) b.y = canvas.height - Math.random() * 300;
+    ctx.globalAlpha = b.alpha;
+    ctx.beginPath();
+    ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
+    ctx.fillStyle = "#fff";
+    ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+}
+
+// === Draw Cake from your code ===
+function drawCake(time) {
+  centerX = canvas.width / 2;
+  centerY = canvas.height * 0.6;
+
+  // Base
+  ctx.fillStyle = '#8B4513';
+  ctx.fillRect(centerX - 180, centerY, 360, 160);
+
+  // Layers
+  ctx.fillStyle = '#D2B48C';
+  ctx.fillRect(centerX - 180, centerY, 360, 30);
+  ctx.fillRect(centerX - 180, centerY + 60, 360, 30);
+
+  // Top circle
+  ctx.beginPath();
+  ctx.fillStyle = '#F5DEB3';
+  ctx.arc(centerX, centerY, 180, 0, Math.PI, true);
+  ctx.fill();
+
+  // Frosting balls
+  ctx.fillStyle = '#FFF';
+  for (let i = -160; i <= 160; i += 40) {
+    ctx.beginPath();
+    ctx.arc(centerX + i, centerY, 25, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Decorative cherries or dots
+  ctx.fillStyle = '#FF6347';
+  for (let i = -150; i <= 150; i += 30) {
+    ctx.beginPath();
+    ctx.arc(centerX + i, centerY + 90, 12, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Texture lines
+  ctx.strokeStyle = '#8B4513';
+  ctx.lineWidth = 2;
+  for (let i = -160; i <= 160; i += 20) {
+    ctx.beginPath();
+    ctx.moveTo(centerX + i, centerY + 30);
+    ctx.lineTo(centerX + i, centerY + 140);
+    ctx.stroke();
+  }
+
+  // Shadow under cake
+  ctx.beginPath();
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+  ctx.ellipse(centerX, centerY + 180, 200, 40, 0, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+// Draw candles
+function drawSingleCandle(x, colorIndex) {
+  const candleColors = ['#FFD700', '#FF69B4', '#87CEFA', '#ADFF2F', '#FFB6C1'];
+  ctx.fillStyle = candleColors[colorIndex % candleColors.length];
+  ctx.fillRect(x - 5, centerY - 120, 10, 80);
+
+  ctx.strokeStyle = '#FFF';
+  ctx.lineWidth = 2;
+  for (let j = centerY - 120; j < centerY - 40; j += 10) {
+    ctx.beginPath();
+    ctx.moveTo(x - 5, j);
+    ctx.lineTo(x + 5, j);
+    ctx.stroke();
+  }
+}
+
+// Flame
+function drawFlame(x, y, time) {
+  const flameHeight = 20 + Math.sin(time / 100) * 5;
+  ctx.beginPath();
+  ctx.fillStyle = '#FF4500';
+  ctx.ellipse(x, y, 8, flameHeight, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.beginPath();
+  ctx.fillStyle = '#FFD700';
+  ctx.ellipse(x, y - flameHeight / 2, 5, flameHeight / 2, 0, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+// Fire effect under candles
+function drawFire(x, y, time) {
+  ctx.beginPath();
+  ctx.fillStyle = 'rgba(255, 100, 0, 0.8)';
+  ctx.arc(x, y + 10, 15 + Math.sin(time / 100) * 5, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+// Draw Guitar (on right side of cake)
+function drawGuitar(time) {
+  const x = centerX + 170;
+  const y = centerY - 60;
+
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(-0.25); // Tilted slightly
+
+  // Neck
+  ctx.fillStyle = "#A0522D"; // Wood color
+  ctx.fillRect(0, 0, 15, 180); // Longer neck
+
+  // Headstock
+  ctx.fillStyle = "#654321";
+  ctx.fillRect(-5, -30, 25, 30);
+
+  // Strings
+  ctx.strokeStyle = "#fff";
+  ctx.lineWidth = 1.5;
+  for (let i = 0; i < 6; i++) {
+    ctx.beginPath();
+    ctx.moveTo(i * 3 + 1.5, 0);
+    ctx.lineTo(i * 3 + 1.5, 180);
+    ctx.stroke();
+  }
+
+  // Sound hole
+  ctx.beginPath();
+  ctx.fillStyle = "#000";
+  ctx.arc(7, 190, 7, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Body
+  ctx.beginPath();
+  ctx.fillStyle = "#8B4513";
+  ctx.ellipse(7, 190, 30, 40, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Wood texture
+  ctx.strokeStyle = "#A0522D";
+  ctx.lineWidth = 1;
+  for (let i = 0; i < 6; i++) {
+    ctx.beginPath();
+    ctx.moveTo(i * 6, 160);
+    ctx.lineTo(i * 6, 220);
+    ctx.stroke();
+  }
+  
+
+  // Shadow under guitar
+  ctx.beginPath();
+  ctx.fillStyle = "rgba(0, 0, 0, 0.2)";
+  ctx.ellipse(7, 200, 35, 10, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.restore();
+}
+
+// Text animation
+function drawTextAnimated(progress) {
+  const text = 'Happy Birthday, My Queen Rory';
+  const displayedText = text.slice(0, Math.floor(progress * text.length));
+  ctx.font = '48px Arial';
+  ctx.fillStyle = '#FFF';
+  ctx.textAlign = 'center';
+  ctx.clearRect(centerX - 200, centerY - 270, 400, 60);
+  ctx.fillText(displayedText, centerX, centerY - 220);
+}
+
+// Animation Loop
+let progress = 0;
+let textProgress = 0;
+let animationId;
+
+function animate(time) {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Sky with stars
+  drawStars(time);
+
+  // Sea layer
+  ctx.fillStyle = "#001f3f";
+  ctx.fillRect(0, canvas.height * 0.6, canvas.width, canvas.height * 0.4);
+
+  // Waves
+  ctx.strokeStyle = "#0074D9";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  for (let x = 0; x <= canvas.width; x += 10) {
+    const y = canvas.height * 0.6 + Math.sin((x + time / 100) * 0.1) * 5;
+    if (x === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+
+  // Bubbles
+  drawBubbles();
+
+  // Cake drawing starts after some delay
+  if (progress < 1) {
+    progress += 0.01;
+  }
+
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(centerX - 200, canvas.height * 0.4, 400, canvas.height * 0.5);
+  ctx.clip();
+  drawCake(time);
+  ctx.restore();
+
+  // Draw all 5 candles continuously
+  for (let i = 0; i < 5; i++) {
+    drawSingleCandle(centerX - 120 + i * 60, i);
+    drawFlame(centerX - 120 + i * 60, centerY - 130, time);
+    drawFire(centerX - 120 + i * 60, centerY - 130, time);
+  }
+
+  // Draw Guitar
+  drawGuitar(time);
+
+  // Draw text
+  if (progress > 0.5) {
+    drawTextAnimated(textProgress);
+    if (textProgress < 1) {
+      textProgress += 0.01;
+    }
+  }
+
+  animationId = requestAnimationFrame(animate);
+}
+
+ctx.clearRect(0, 0, canvas.width, canvas.height);
+animate(0);
+</script>
+</body>
+</html>
